@@ -6,7 +6,7 @@ package org.example;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class TestNGEAppMain {
+public class TestMainComponent {
     @Test public void okTest() {
         assertTrue("This test should always pass", true);         
     }

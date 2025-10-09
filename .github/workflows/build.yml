@@ -31,6 +31,33 @@ jobs:
         path: dist/portable/*-portable.jar
         retention-days: 7
 
+  build-web:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
+    
+    - name: Build Web Application
+      run: ./gradlew buildBundledWebApp
+    
+    - name: Upload pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: 'dist/web-bundle'
+
+    - name: Deploy to GitHub Pages
+      if: github.event_name == 'release'  
+      id: deployment
+      uses: actions/deploy-pages@v4
+      
+
   build-native:
     runs-on: ${{ matrix.os }}
     strategy:

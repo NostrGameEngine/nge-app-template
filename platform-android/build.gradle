@@ -1,0 +1,85 @@
+plugins {
+    id 'com.android.application'
+}
+
+def localPropsFile = file("${rootDir}/local.properties")
+if (!localPropsFile.exists()) {
+    def userHome = System.getProperty('user.home')
+    localPropsFile.text = "sdk.dir=${userHome}/Android/Sdk"
+    println "Created local.properties with sdk.dir=${userHome}/Android/Sdk"
+}
+
+android {
+    compileSdk 36
+    namespace "${project.Namespace}"  
+
+    defaultConfig {
+        applicationId "${project.Namespace}"
+        minSdk 33
+        targetSdk 33
+        versionCode  project.VersionCode.toInteger()
+        versionName  project.Version
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders = [
+            appLabel         : (project.findProperty('Title') ?: "NGE Unnamed App"),
+            screenOrientation: (project.findProperty('ScreenOrientation') ?: "landscape")
+        ]
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+
+}
+
+
+dependencies {
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.constraintlayout
+    implementation libs.navigation.fragment
+    implementation libs.navigation.ui
+    testImplementation libs.junit.v4133snapshot
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+
+
+    implementation project(':app') 
+    implementation "org.ngengine:nge-platform-android:${ngePlatformVersion}"
+    implementation "org.ngengine:nge-app:${ngeVersion}"
+    implementation "org.ngengine:nge-android:${ngeVersion}"
+
+}
+
+apply from: "${rootDir}/gradle/libs/android-icon-gen.gradle"
+
+task generateAndroidLauncherIcons (){
+    doLast {
+        gradle.ext.generateAndroidIcons("${rootDir}/icon.png", "${projectDir}/src/main/res")
+    }
+}
+
+android.applicationVariants.all { variant ->
+    variant.mergeResourcesProvider.configure { dependsOn(generateAndroidLauncherIcons) }
+}
+ 
