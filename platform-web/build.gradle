@@ -137,7 +137,7 @@ task finalizeResources {
     }
 }
 
-task generateResourcesIndex {
+task generateResources {
     dependsOn finalizeResources
     doLast {
         def outputDir = file("$buildDir/generated/teavm/js/")
@@ -321,7 +321,7 @@ teavm.js {
 
 
 task buildWebApp {
-    dependsOn 'compileJava',  'generateJavaScript', 'copyAllResources', 'generateResourcesIndex'
+    dependsOn   'generateJavaScript', 'generateResources'
     // copy to dist/web
     doLast {
         def jsDir = file("$buildDir/generated/teavm/js")
