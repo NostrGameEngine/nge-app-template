@@ -82,15 +82,6 @@ jobs:
         distribution: 'graalvm'
         github-token: ${{ secrets.GITHUB_TOKEN }}
         native-image-job-reports: 'true'
-
-    - name: Build Installer for ${{ matrix.platform }}
-      shell: bash
-      run: |
-          if [[ "${{ matrix.platform }}" == "linux" ]]; then
-            sudo apt-get install -y rpm
-          fi
-          ./gradlew buildInstaller
-          ls -R dist
         
     - name: Build Native Executable  for ${{ matrix.platform }}
       shell: bash
