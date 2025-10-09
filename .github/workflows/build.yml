@@ -33,7 +33,11 @@ jobs:
 
   build-web:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      packages: write 
+      id-token: write
+      pages: write
     steps:
     - uses: actions/checkout@v3
     
