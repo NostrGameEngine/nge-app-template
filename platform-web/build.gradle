@@ -76,76 +76,7 @@ def binaryExclusions = [
     // '**/*.java'
 ]
 
-task copyAllResources {
- 
 
-    dependsOn configurations.runtimeClasspath.getTaskDependencyFromProjectDependency(true, 'jar')
-    dependsOn 'jar'
-
-    ['compileTeavmJava','processTeavmResources','compileJava','processResources']
-        .each { tn -> if (tasks.findByName(tn) != null) dependsOn tn }
-
-    doFirst {
-        println "Copying ALL runtimeClasspath resources (including transitives) -> $buildDir/generated/teavm/js"
-        delete "$buildDir/generated/teavm/js"
-    }
-
-    doLast {
-        def dest = file("$buildDir/generated/teavm/js")
-        dest.mkdirs()
-
-        def safeCopy = { spec ->
-            copy {
-                into dest
-                from spec
-                exclude(*binaryExclusions)
-                exclude '**/module-info.class'
-                includeEmptyDirs = false
-                duplicatesStrategy = DuplicatesStrategy.INCLUDE
-            }
-        }
-        safeCopy('src/main/resources')
-
-        def runtimeFiles = configurations.runtimeClasspath.resolvedConfiguration.lenientConfiguration.files
-        runtimeFiles.each { f ->
-            if (!f.exists()) return
-            if (f.isDirectory()) {
-                safeCopy(f)
-            } else if (f.name.endsWith('.jar')) {
-                safeCopy(project.zipTree(f))
-            }
-        }
-
-        println "Resource aggregation complete. Total files: " +
-            fileTree(dest).matching { exclude(*binaryExclusions) }.files.size()
-    }
-}
-
-task finalizeResources {
-    dependsOn copyAllResources
-    doLast {
-        def manifestFile = file("$buildDir/generated/teavm/js/manifest.json")
-        if (manifestFile.exists()) {
-            def manifest = new groovy.json.JsonSlurper().parseText(manifestFile.text)
-            manifest.name = Title
-            manifest.short_name = ShortName
-
-            manifestFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(manifest))
-            println "Updated manifest.json: name=$Title, short_name=$ShortName"
-        }
-    
-    }
-}
-
-task generateResources {
-    dependsOn finalizeResources
-    doLast {
-        def outputDir = file("$buildDir/generated/teavm/js/")
-        def outputFile = file("$buildDir/generated/teavm/js/resources.index.txt")
-
-        outputFile.text = generateHashes(outputDir)
-    }
-}
 
 def generateHashes(File dir) {
     def hashes = []
@@ -170,8 +101,58 @@ def generateSHA256(file) {
     return messageDigest.digest().collect { String.format("%02x", it) }.join()
 }
 
+task copyAllResources {
 
+    dependsOn configurations.runtimeClasspath.getTaskDependencyFromProjectDependency(true, 'jar')
+    dependsOn 'jar'
 
+    ['compileTeavmJava','processTeavmResources','compileJava','processResources']
+        .each { tn -> if (tasks.findByName(tn) != null) dependsOn tn }
+
+    doLast {
+        def dest = file("${rootDir}/dist/web")
+        dest.mkdirs()
+
+        def safeCopy = { spec ->
+            copy {
+                into dest
+                from spec
+                exclude(*binaryExclusions)
+                exclude '**/module-info.class'
+                includeEmptyDirs = false
+                duplicatesStrategy = DuplicatesStrategy.INCLUDE
+            }
+        }
+        safeCopy('src/main/resources')
+
+        def runtimeFiles = configurations.runtimeClasspath.resolvedConfiguration.lenientConfiguration.files
+        runtimeFiles.each { f ->
+            if (!f.exists()) return
+            if (f.isDirectory()) {
+                safeCopy(f)
+            } else if (f.name.endsWith('.jar')) {
+                safeCopy(project.zipTree(f))
+            }
+        }
+
+        println "Resource aggregation complete. Total files: " +  fileTree(dest).matching { exclude(*binaryExclusions) }.files.size()
+
+        def manifestFile = file("${rootDir}/dist/web/manifest.json")
+        if (manifestFile.exists()) {
+            def manifest = new groovy.json.JsonSlurper().parseText(manifestFile.text)
+            manifest.name = Title
+            manifest.short_name = ShortName
+
+            manifestFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(manifest))
+            println "Updated manifest.json: name=$Title, short_name=$ShortName"
+        }
+
+        def outputDir = file("${rootDir}/dist/web/")
+        def outputFile = file("${rootDir}/dist/web/resources.index.txt")
+
+        outputFile.text = generateHashes(outputDir)
+    }
+}
 
 
 def generateClassListFile(File outputFile, Collection<String> classes, Closure<String> lineFormatter) {
@@ -320,14 +301,14 @@ teavm.js {
 }
 
 
+
 task buildWebApp {
-    dependsOn   'generateJavaScript', 'generateResources'
+    dependsOn  'compileJava', 'generateJavaScript', 'copyAllResources'
     // copy to dist/web
     doLast {
         def jsDir = file("$buildDir/generated/teavm/js")
-        def distDir = file("${rootProject.projectDir}/dist/web")
+        def distDir = file("${rootDir}/dist/web")
         distDir.mkdirs()
-        delete fileTree(distDir).matching { include '**/*' }
         copy {
             from jsDir
             into distDir
@@ -340,8 +321,8 @@ task buildWebApp {
 task buildBundledWebApp {
     dependsOn buildWebApp    
     doLast {
-        def jsDir = file("$buildDir/generated/teavm/js")
-        def bundledJsDir = file("$buildDir/generated/teavm/bundledjs")
+        def jsDir = file("$rootDir/dist/web")
+        def bundledJsDir = file("$rootDir/dist/web-bundle")
         def bundleIgnoreFile = file("$jsDir/bundle-ignore.txt")
         def zipFile = file("$bundledJsDir/ngeapp-bundle.zip")
         def configFile = file("$bundledJsDir/ngeapp.json")
@@ -434,15 +415,7 @@ task buildBundledWebApp {
         println "Config written to: $configFile.path"
 
 
-        // copy to dist/web-bundle
-        def distDir = file("${rootProject.projectDir}/dist/web-bundle")
-        distDir.mkdirs()
-        delete fileTree(distDir).matching { include '**/*' }
-        copy {
-            from bundledJsDir
-            into distDir
-        }
-        println "Copied bundled web app to: $distDir"
+        
     }
 }
 
@@ -454,14 +427,14 @@ task npmCi(type: NpmTask) {
 
 task runWebApp(type: NpxTask) {
     dependsOn buildWebApp
-    workingDir = file("$buildDir/generated/teavm/js")
+    workingDir = file("$rootDir/dist/web")
     command = 'http-server'
     args = [ '.', '-p', '8000']
 }
 
-task runBudledWebApp(type: NpxTask) {
+task runBundledWebApp(type: NpxTask) {
     dependsOn buildBundledWebApp
-    workingDir = file("$buildDir/generated/teavm/js")
+    workingDir = file("$rootDir/dist/web-bundle")
     command = 'http-server'
     args = [ '.', '-p', '8000']
 }
@@ -470,8 +443,7 @@ task deployWebApp(type: NpxTask) {
     dependsOn buildBundledWebApp
     dependsOn npmCi
     command = 'nostr-deploy-cli'
-    args = ['deploy','--skip-setup', '-d', "${buildDir}/generated/teavm/bundledjs"]
+    args = ['deploy','--skip-setup', '-d', "${rootDir}/dist/web-bundle"]
     workingDir = file("${projectDir}")
 }
-
 

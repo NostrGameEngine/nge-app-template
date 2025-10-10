@@ -62,6 +62,17 @@ if (!gradle.hasProperty('ext')) {
     gradle.ext {}
 }
 
+gradle.beforeProject { p ->
+    if (p == p.rootProject) {
+        p.tasks.register("cleanDist", org.gradle.api.tasks.Delete) {
+            delete p.layout.projectDirectory.dir("dist")
+        }
+        p.gradle.projectsEvaluated {
+            def cleanTask = p.tasks.findByName("clean") ?: p.tasks.register("clean")
+            cleanTask.configure { dependsOn("cleanDist") }
+        }
+    }
+}
 
 // import json properties
 apply from: "${rootDir}/gradle/libs/props.gradle"
