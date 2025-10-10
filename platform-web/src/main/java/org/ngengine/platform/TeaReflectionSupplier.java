@@ -411,7 +411,6 @@ public class TeaReflectionSupplier implements ReflectionSupplier {
         TeaReflectionSupplier.addReflectionClass("com.jme3.texture.TextureCubeMap");
         TeaReflectionSupplier.addReflectionClass("com.jme3.texture.TextureProcessor");
         TeaReflectionSupplier.addReflectionClass("com.jme3.texture.plugins.DDSLoader");
-        TeaReflectionSupplier.addReflectionClass("com.jme3.texture.plugins.HDRLoader");
         TeaReflectionSupplier.addReflectionClass("com.jme3.texture.plugins.PFMLoader");
         TeaReflectionSupplier.addReflectionClass("com.jme3.texture.plugins.SVGTextureKey");
         TeaReflectionSupplier.addReflectionClass("com.jme3.texture.plugins.TGALoader");
@@ -594,7 +593,7 @@ public class TeaReflectionSupplier implements ReflectionSupplier {
         TeaReflectionSupplier.addReflectionClass("org.ngengine.player.PlayerManagerComponent");
         TeaReflectionSupplier.addReflectionClass("org.ngengine.web.context.HeapAllocator");
         TeaReflectionSupplier.addReflectionClass("org.ngengine.web.context.WebSystem");
-        TeaReflectionSupplier.addReflectionClass("org.ngengine.web.filesystem.CanvasImageLoader");
+        TeaReflectionSupplier.addReflectionClass("org.ngengine.web.filesystem.WebImageLoader");
         TeaReflectionSupplier.addReflectionClass("org.ngengine.web.filesystem.WebLocator");
         TeaReflectionSupplier.addReflectionClass("org.ngengine.web.filesystem.WebResourceLoader");
         TeaReflectionSupplier.addReflectionClass("org.ngengine.web.json.TeaJSONParser");
