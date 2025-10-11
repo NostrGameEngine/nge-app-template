@@ -18,7 +18,8 @@
                     "__GL_THREADED_OPTIMIZATIONS": "0"
                 }
             },
-            "vmArgs": "-ea -Djava.util.logging.config.file=${workspaceFolder}/dev-logging.properties"
+            "vmArgs": "-ea -Pthreadwarden=true -Djava.util.logging.config.file=${workspaceFolder}/dev-logging.properties",
+            
         }
     ]
 }
