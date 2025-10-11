@@ -172,8 +172,7 @@ def generateCodeFromTemplate(File outputFile, String template, Map<String, Objec
 }
 
 task scanClasspathForTeaVM {
-    dependsOn configurations.runtimeClasspath.getTaskDependencyFromProjectDependency(true, "jar")
-    dependsOn "jar"
+    dependsOn configurations.compileClasspath.getTaskDependencyFromProjectDependency(true, 'classes')
     doLast {
         def scanResults = project.scanClasspathForClasses(project)
 
@@ -210,23 +209,21 @@ task updateTeaReflectionSupplier {
     }
 }
 
-compileTeavmJava.dependsOn updateTeaReflectionSupplier
+tasks.named('compileJava').configure {
+    dependsOn 'updateTeaReflectionSupplier'
+}
 
 teavm.js {
     addedToWebApp = false
     mainClass = "org.ngengine.platform.WebLauncher"
-    obfuscated = false
-    debugInformation = true
+    // obfuscated = false
+    // debugInformation = true
     strict= false
     outOfProcess=false
     // optimization=org.teavm.gradle.api.OptimizationLevel.NONE
     sourceMap=true    
     moduleType = org.teavm.gradle.api.JSModuleType.ES2015  
 
-    properties = [
-        "teavm.c.vmAssertions": "false"
-    ]
-    
     def classesToPreserve=[]
     def preserveListFile = file("${buildDir}/generated/teaReflectList.txt")
     if (preserveListFile.exists()) {
@@ -304,7 +301,6 @@ teavm.js {
 
 task buildWebApp {
     dependsOn  'compileJava', 'generateJavaScript', 'copyAllResources'
-    // copy to dist/web
     doLast {
         def jsDir = file("$buildDir/generated/teavm/js")
         def distDir = file("${rootDir}/dist/web")
