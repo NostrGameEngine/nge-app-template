@@ -10,7 +10,7 @@
         "**/.gradle": true,
         "**/build": true,
         "**/bin": true,
-        "platform-*": true
+        // "platform-*": true
         
     }
 }

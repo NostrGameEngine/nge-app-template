@@ -2390,7 +2390,7 @@
       ]
     },
     {
-      "type": "org.ngengine.gui.components.NIconButton",
+      "type": "org.ngengine.gui.guix.NIconButton",
       "methods": [
         {
           "name": "setColor",
@@ -2413,10 +2413,10 @@
       ]
     },
     {
-      "type": "org.ngengine.gui.components.NLabel"
+      "type": "org.ngengine.gui.guix.NLabel"
     },
     {
-      "type": "org.ngengine.gui.components.NLoadingSpinner",
+      "type": "org.ngengine.gui.guix.NLoadingSpinner",
       "methods": [
         {
           "name": "initializeDefaultStyles",
@@ -2433,7 +2433,7 @@
       ]
     },
     {
-      "type": "org.ngengine.gui.components.NQrViewer",
+      "type": "org.ngengine.gui.guix.NQrViewer",
       "methods": [
         {
           "name": "setDarkPixelsColor",
@@ -2450,25 +2450,25 @@
       ]
     },
     {
-      "type": "org.ngengine.gui.components.NTextInput"
+      "type": "org.ngengine.gui.guix.NTextInput"
     },
     {
-      "type": "org.ngengine.gui.components.NVSpacer"
+      "type": "org.ngengine.gui.guix.NVSpacer"
     },
     {
-      "type": "org.ngengine.gui.components.containers.NColumn"
+      "type": "org.ngengine.gui.guix.containers.NColumn"
     },
     {
-      "type": "org.ngengine.gui.components.containers.NContainer"
+      "type": "org.ngengine.gui.guix.containers.NContainer"
     },
     {
-      "type": "org.ngengine.gui.components.containers.NMultiPageList"
+      "type": "org.ngengine.gui.guix.containers.NMultiPageList"
     },
     {
-      "type": "org.ngengine.gui.components.containers.NPanel"
+      "type": "org.ngengine.gui.guix.containers.NPanel"
     },
     {
-      "type": "org.ngengine.gui.components.containers.NRow"
+      "type": "org.ngengine.gui.guix.containers.NRow"
     },
     {
       "type": "org.ngengine.gui.svg.SVGLoader",
@@ -2480,13 +2480,13 @@
       ]
     },
     {
-      "type": "org.ngengine.gui.win.NToast"
+      "type": "org.ngengine.gui.guix.win.NToast"
     },
     {
-      "type": "org.ngengine.gui.win.NWindow"
+      "type": "org.ngengine.gui.guix.win.NWindow"
     },
     {
-      "type": "org.ngengine.gui.win.std.NHud",
+      "type": "org.ngengine.gui.guix.win.NHud",
       "methods": [
         {
           "name": "<init>",

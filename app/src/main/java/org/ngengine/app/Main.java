@@ -5,7 +5,7 @@ import org.ngengine.NGEApplication;
 import org.ngengine.NGEApplication.NGEAppRunner;
 import org.ngengine.components.ComponentManager;
  
-import org.ngengine.gui.win.NWindowManagerComponent;
+import org.ngengine.gui.guix.win.NWindowManagerComponent;
 import org.ngengine.player.PlayerManagerComponent;
 
 

@@ -2,21 +2,18 @@ plugins {
     id 'com.android.application'
 }
 
-def localPropsFile = file("${rootDir}/local.properties")
-if (!localPropsFile.exists()) {
-    def userHome = System.getProperty('user.home')
-    localPropsFile.text = "sdk.dir=${userHome}/Android/Sdk"
-    println "Created local.properties with sdk.dir=${userHome}/Android/Sdk"
-}
+def androidCompileSdkVersion = (findProperty('androidCompileSdk') ?: 36).toString().toInteger()
+def androidMinSdkVersion = (findProperty('androidMinSdk') ?: 33).toString().toInteger()
+def androidTargetSdkVersion = (findProperty('androidTargetSdk') ?: 33).toString().toInteger()
 
 android {
-    compileSdk 36
+    compileSdk androidCompileSdkVersion
     namespace "${project.Namespace}"  
 
     defaultConfig {
         applicationId "${project.Namespace}"
-        minSdk 33
-        targetSdk 33
+        minSdk androidMinSdkVersion
+        targetSdk androidTargetSdkVersion
         versionCode  project.VersionCode.toInteger()
         versionName  project.Version
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -82,4 +79,3 @@ task generateAndroidLauncherIcons (){
 android.applicationVariants.all { variant ->
     variant.mergeResourcesProvider.configure { dependsOn(generateAndroidLauncherIcons) }
 }
- 

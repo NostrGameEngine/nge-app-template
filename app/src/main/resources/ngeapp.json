@@ -14,6 +14,10 @@
     "Copyright": "",
     "VSync": true,
     "GammaCorrection": true,
+    "DisableJoysticks": false,
+    "VirtualJoystick": "VirtualJoystickEnabled",
+    "VirtualJoystickDefaultLayout": "Dynamic",
+    "OnDeviceJoystickRumble": true,
     "ScreenOrientation": "landscape",
     "run_in_worker": false,
     "relays": {

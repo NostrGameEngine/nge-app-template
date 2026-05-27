@@ -31,6 +31,7 @@ These properties are automatically loaded by the `NGEAppSettings` class and can 
 You can also allow users to modify these settings at runtime, see the [documentation](https://ngengine.org/docs/) for details.
 
 The logo in `icon.png` is used throughout the project as the default application icon.
+Android launcher icons and the iOS app icon catalog are generated from this file.
 
 ### Platform Modules
 
@@ -38,9 +39,12 @@ Platform-specific code and resources are located in the following directories:
 
 * `platform-android/`: Android-specific code and assets
 * `platform-desktop/`: Desktop-specific code and resources (Windows, macOS, Linux)
+* `platform-ios/`: iOS-specific launcher and build configuration
 * `platform-web/`: Web-specific code and resources
 
-These are hidden by default in VSCode to reduce clutter, but you can still access them when needed by editing the file exclusion list in `.vscode/settings.json`.
+`platform-android` is included only when Gradle can find the configured Android SDK platform.
+`platform-ios` is included only on macOS.
+Platform directories are hidden by default in VS Code to reduce clutter, but you can still access them when needed by editing the file exclusion list in `.vscode/settings.json`.
 
 ### Dist folder
 
@@ -48,6 +52,9 @@ The `dist/` directory is where the final build outputs are placed.
 
 
 # Build
+
+This branch is wired for the upcoming NGE `next2` release and resolves NGE artifacts from Maven local first.
+Before building the template against local engine changes, publish the engine and platform artifacts to Maven local from their repositories.
 
 ## Portable jar 
 
@@ -77,12 +84,28 @@ The `dist/` directory is where the final build outputs are placed.
 - Build-time requirements: 
     - Android SDK 36+
 - Run-time requirements: 
-    - Android 16+
+    - Android 33+
 - Build commands:
     - `./gradlew :platform-android:installDebug` : to build and install the debug APK on a connected device or emulator
     - `./gradlew :platform-android:generateAndroidLauncherIcons` : to generate launcher icons from `icon.png`
 
+If Android SDK 36 is not installed, Gradle skips the `platform-android` module instead of failing project configuration.
+The Android launcher uses a no-arg `TemplateAndroidLauncherFragment` subclass. Keep that pattern when customizing the launcher: Android must be able to recreate fragments by class name, so avoid passing app factories through fragment constructors.
 You can open the project in Android Studio for easier management of signing keys, dependencies, and other Android-specific settings.
+
+## iOS App
+- Platforms: iOS and iOS Simulator
+- Build-time requirements:
+    - macOS
+    - Xcode command line tools
+    - libJGLIOS/Graal iOS toolchain configured for the requested task
+- Build commands:
+    - `./gradlew :platform-ios:buildIosSimulatorApp` : builds the simulator `.app`
+    - `./gradlew :platform-ios:runIosDebugApp` : builds and launches on the configured simulator
+    - `./gradlew :platform-ios:buildIosApp` : builds the device/app-store package
+
+If the host is not macOS, Gradle skips the `platform-ios` module.
+The iOS build copies `app/src/main/resources` into the app bundle and uses `icon.png` to generate the iOS asset catalog.
 
 ## Web App
 - Platforms: Web (modern browsers)

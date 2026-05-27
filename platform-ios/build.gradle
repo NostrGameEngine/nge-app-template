@@ -1,0 +1,121 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "org.ngengine:libjglios-gradle-plugin:${libjgliosVersion}"
+    }
+}
+
+import groovy.json.JsonOutput
+
+apply plugin: 'org.ngengine.libjglios'
+
+description = 'iOS launcher for the Nostr Game Engine app template.'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+def iosNativeImageMetadataDir = layout.buildDirectory.dir('generated/ios-native-image-metadata/resources')
+def iosBundleAssetsDir = layout.buildDirectory.dir('generated/ios-bundle-assets')
+
+def iosOrientation = {
+    def value = (project.findProperty('ScreenOrientation') ?: 'landscape').toString().toLowerCase()
+    value.contains('portrait') ? 'portrait' : 'landscape'
+}
+
+tasks.register('generateIosNativeImageMetadata') {
+    def reflectConfig = iosNativeImageMetadataDir.map {
+        it.file('META-INF/native-image/org.ngengine/nge-app-template-ios/reflect-config.json')
+    }
+    outputs.file(reflectConfig)
+    inputs.property('launcherClass', 'org.ngengine.platform.IosLauncher')
+    doLast {
+        def metadata = [
+            [
+                name: 'org.ngengine.platform.IosLauncher',
+                allDeclaredConstructors: true,
+                allPublicMethods: true
+            ],
+            [
+                name: 'org.ngengine.gui.guix.win.NHud',
+                allDeclaredConstructors: true,
+                allPublicMethods: true
+            ]
+        ]
+        def outputFile = reflectConfig.get().asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(metadata)) + System.lineSeparator()
+    }
+}
+
+tasks.register('syncIosBundleAssets', Sync) {
+    from project(':app').file('src/main/resources')
+    into iosBundleAssetsDir
+    exclude 'ngeapp.json'
+}
+
+libJGLIOS {
+    mainClass = 'org.ngengine.platform.IosLauncher'
+    bundleId = project.Namespace.toString()
+    appName = project.ShortName.toString()
+    appIcon = file("${rootDir}/icon.png")
+    orientation = iosOrientation()
+    simulatorDevice = (findProperty('iosSimulatorDevice') ?: 'iPhone 16').toString()
+    assets iosBundleAssetsDir
+}
+
+sourceSets {
+    main {
+        resources.srcDir iosNativeImageMetadataDir
+    }
+}
+
+dependencies {
+    implementation project(':app')
+    implementation "org.ngengine:nge-platform-jvm:${ngePlatformVersion}"
+    implementation "org.ngengine:nge-app:${ngeVersion}"
+    implementation "org.ngengine:jme3-ios:${ngeVersion}"
+    implementation "org.ngengine:jme3-effects:${ngeVersion}"
+    implementation "org.ngengine:jme3-jogg:${ngeVersion}"
+    implementation "org.ngengine:jme3-networking:${ngeVersion}"
+    implementation "org.ngengine:jme3-plugins:${ngeVersion}"
+    implementation "org.ngengine:jme3-plugins-json:${ngeVersion}"
+    implementation "org.ngengine:jme3-plugins-json-gson:${ngeVersion}"
+    implementation "org.ngengine:libjglios-core-ios:${libjgliosVersion}"
+    implementation "org.ngengine:libjglios-gles-ios:${libjgliosVersion}"
+    implementation "org.ngengine:libjglios-sdl3-ios:${libjgliosVersion}"
+    implementation "org.ngengine:libjglios-openal-ios:${libjgliosVersion}"
+    implementation "org.ngengine:libjglios-angle-ios:${libjgliosVersion}"
+}
+
+tasks.named('compileJava') {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    options.release = 21
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('generateIosNativeImageMetadata')
+}
+
+tasks.matching {
+    it.name.startsWith('buildIos')
+            || it.name == 'runIosDebugApp'
+            || it.name == 'linkApp'
+            || it.name == 'linkSimulatorApp'
+            || it.name == 'buildUsercode'
+            || it.name == 'buildIosSimulatorUsercode'
+}.configureEach {
+    dependsOn tasks.named('syncIosBundleAssets')
+}
+
+tasks.register('runIosTemplate') {
+    group = 'verification'
+    description = 'Builds, installs, and launches the iOS template app on the configured simulator.'
+    dependsOn tasks.named('runIosDebugApp')
+}

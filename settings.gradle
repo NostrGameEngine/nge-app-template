@@ -1,13 +1,14 @@
 
- 
+import java.util.Properties
+
 pluginManagement {
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
         gradlePluginPortal()
         maven { url = uri("https://teavm.org/maven/repository") }
         maven { url = uri("https://maven.ngengine.org/riccardobl/teavm") }
-        mavenLocal()
     }
     plugins {
         id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
@@ -35,7 +36,22 @@ toolchainManagement {
 
 dependencyResolutionManagement {
     repositories {
-        mavenLocal()
+        exclusiveContent {
+            forRepository {
+                mavenLocal()
+            }
+            filter {
+                includeVersionByRegex("org\\.ngengine", ".*", "0\\.2\\.0-SNAPSHOT")
+            }
+        }
+        maven {
+            name = "MavenLocalDirect"
+            url = uri("${System.getProperty('user.home')}/.m2/repository")
+            metadataSources {
+                mavenPom()
+                artifact()
+            }
+        }
         mavenCentral()
         google()
         maven {
@@ -64,6 +80,12 @@ if (!gradle.hasProperty('ext')) {
     gradle.ext {}
 }
 
+def templateProperties = new Properties()
+def templatePropertiesFile = file("${rootDir}/gradle.properties")
+if (templatePropertiesFile.isFile()) {
+    templatePropertiesFile.withInputStream { templateProperties.load(it) }
+}
+
 gradle.beforeProject { p ->
     if (p == p.rootProject) {
         p.tasks.register("cleanDist", org.gradle.api.tasks.Delete) {
@@ -85,15 +107,54 @@ gradle.beforeProject { p ->
     if (ngeConfig.Namespace) p.group   = ngeConfig.Namespace.toString()
 }
 
-print("Build with config: "+ngeConfig)
+println("Build with config: " + ngeConfig)
 rootProject.name = ngeConfig.ShortName
 include('app')
 
 // ENABLE DESKTOP BUILD TARGET
 include('platform-desktop')
 
-// ENABLE ANDROID BUILD TARGET
-include('platform-android')
-
 // ENABLE WEB BUILD TARGET
 include('platform-web')
+
+def requestedAndroidCompileSdk = (templateProperties.getProperty('androidCompileSdk') ?: '36') as int
+def androidSdkCandidates = [] as LinkedHashSet<File>
+def addAndroidSdkCandidate = { Object path ->
+    if (path != null && path.toString().trim()) {
+        androidSdkCandidates << file(path.toString().trim())
+    }
+}
+
+def localPropertiesFile = file("${rootDir}/local.properties")
+if (localPropertiesFile.isFile()) {
+    def localProperties = new Properties()
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+    addAndroidSdkCandidate(localProperties.getProperty('sdk.dir'))
+}
+addAndroidSdkCandidate(templateProperties.getProperty('android.sdk.path'))
+addAndroidSdkCandidate(System.getenv('ANDROID_HOME'))
+addAndroidSdkCandidate(System.getenv('ANDROID_SDK_ROOT'))
+addAndroidSdkCandidate("${System.getProperty('user.home')}/Android/Sdk")
+addAndroidSdkCandidate("${System.getProperty('user.home')}/Library/Android/sdk")
+addAndroidSdkCandidate("${System.getProperty('user.home')}/AppData/Local/Android/Sdk")
+
+def androidSdkDir = androidSdkCandidates.find { candidate ->
+    new File(candidate, "platforms/android-${requestedAndroidCompileSdk}/android.jar").isFile()
+}
+
+if (androidSdkDir != null) {
+    gradle.ext.androidSdkDir = androidSdkDir.absolutePath
+    gradle.ext.androidCompileSdk = requestedAndroidCompileSdk
+    System.setProperty('android.home', androidSdkDir.absolutePath)
+    println("Including platform-android with Android SDK ${requestedAndroidCompileSdk} at ${androidSdkDir}")
+    include('platform-android')
+} else {
+    println("Skipping platform-android: Android SDK platform android-${requestedAndroidCompileSdk} was not found")
+}
+
+if (System.getProperty('os.name', '').toLowerCase().contains('mac')) {
+    println("Including platform-ios on macOS")
+    include('platform-ios')
+} else {
+    println("Skipping platform-ios: iOS builds are only available on macOS")
+}
